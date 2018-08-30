@@ -93,24 +93,24 @@ unsigned int align_to_boundary(unsigned int address, unsigned int boundary) {
 __declspec(naked) int ShellcodeStart(void)
 {
 	__asm {
-			nop						// 32비트의 주소를 맞추기 위하여 nop 명령어를 사용한다.
-			nop
-			nop
-			push   0xAAAAAAAA		// Source.
-			nop
-			nop
-			nop
-			push   0xBBBBBBBB		// Destination.
+		nop						// 32비트의 주소를 맞추기 위하여 nop 명령어를 사용한다.
+		nop
+		nop
+		push   0xAAAAAAAA		// Source.
+		nop
+		nop
+		nop
+		push   0xBBBBBBBB		// Destination.
 
-			pushad
-			mov    esi, [esp + 36]
-			mov    edi, [esp + 32]
-			cld
-			mov    dl, 80h
-			xor    ebx, ebx
+		pushad
+		mov    esi, [esp + 36]
+		mov    edi, [esp + 32]
+		cld
+		mov    dl, 80h
+		xor    ebx, ebx
 
-		literally:
-			movsb
+		literally :
+		movsb
 			mov    bl, 2
 
 			nexttag :
@@ -126,30 +126,30 @@ __declspec(naked) int ShellcodeStart(void)
 			inc    ecx
 			mov    al, 10h
 
-		getmorebits :
-			call   getbit
+			getmorebits :
+		call   getbit
 			adc    al, al
 			jnc    getmorebits
 			jnz    domatch
 			stosb
 			jmp    nexttag
 
-		codepair :
-			call   getgamma_no_ecx
+			codepair :
+		call   getgamma_no_ecx
 			sub    ecx, ebx
 			jnz    normalcodepair
 			call   getgamma
 			jmp    domatch_lastpos
 
-		shortmatch :
-			lodsb
+			shortmatch :
+		lodsb
 			shr    eax, 1
 			jz     donedepacking
 			adc    ecx, ecx
 			jmp    domatch_with_2inc
 
-		normalcodepair :
-			xchg   eax, ecx
+			normalcodepair :
+		xchg   eax, ecx
 			dec    eax
 			shl    eax, 8
 			lodsb
@@ -161,20 +161,20 @@ __declspec(naked) int ShellcodeStart(void)
 			cmp    eax, 7fh
 			ja     domatch_new_lastpos
 
-		domatch_with_2inc :
-			inc    ecx
+			domatch_with_2inc :
+		inc    ecx
 
-		domatch_with_inc :
-			inc    ecx
+			domatch_with_inc :
+		inc    ecx
 
-		domatch_new_lastpos :
-			xchg   eax, ebp
+			domatch_new_lastpos :
+		xchg   eax, ebp
 
-		domatch_lastpos :
-			mov    eax, ebp
+			domatch_lastpos :
+		mov    eax, ebp
 			mov    bl, 1
 
-		domatch :
+			domatch :
 			push   esi
 			mov    esi, edi
 			sub    esi, eax
@@ -182,31 +182,31 @@ __declspec(naked) int ShellcodeStart(void)
 			pop    esi
 			jmp    nexttag
 
-		getbit :
-			add    dl, dl
+			getbit :
+		add    dl, dl
 			jnz    stillbitsleft
 			mov    dl, [esi]
 			inc    esi
 			adc    dl, dl
 
-		stillbitsleft :
-			ret
+			stillbitsleft :
+		ret
 
-		getgamma :
-			xor    ecx, ecx
+			getgamma :
+		xor    ecx, ecx
 
-		getgamma_no_ecx :
-			inc    ecx
+			getgamma_no_ecx :
+		inc    ecx
 
-		getgammaloop :
-			call   getbit
+			getgammaloop :
+		call   getbit
 			adc    ecx, ecx
 			call   getbit
 			jc     getgammaloop
 			ret
 
-		donedepacking :
-			popad
+			donedepacking :
+		popad
 	}
 }
 
@@ -226,15 +226,15 @@ LPBYTE lpPackedBase = NULL;
 LPBYTE lpOrigBuffer = NULL, lpPackedBuffer = NULL, lpWorkMemBuffer;
 DWORD dwOrigSize = NULL, dwPackedSize = NULL, dwWorkMemSize = NULL;
 
-DWORD dwUPX0, dwUPX1, dwUPX2, dwUPX3, dwUPX4;
-DWORD dwRvaUPX0, dwRvaUPX1, dwRvaUPX2, dwRvaUPX3, dwRvaUPX4;
+DWORD dwUPX0, dwUPX1, dwUPX2, dwUPX3, dwUPX4, dwUPX5;
+DWORD dwRvaUPX0, dwRvaUPX1, dwRvaUPX2, dwRvaUPX3, dwRvaUPX4, dwRvaUPX5;
 
 DWORD posOrgIDT, posDongIDT, VirtualAddressIDT, IDTSize, IDTSection, IDTSectionSize;
 DWORD GarbageMemory, JumpToMedium, JumpToRealCode, posIATRVA, Temp;
 DWORD g_posKERNEL32, g_posLoadLibraryA, g_posGetProcAddress, g_posVirtualProtect, posName;
 
 int main() {
-	PE32StandardInfo SrcFile("C:\\LinkParser.exe");
+	PE32StandardInfo SrcFile("C:\\orig.exe");
 	lpPackedBase = GetPackedBufferWithHeaders(&SrcFile);
 	GetSectionsData(&SrcFile);
 	SetNewImportTable(&SrcFile, lpPackedBase);
@@ -243,8 +243,8 @@ int main() {
 	SetUnpackCode(&SrcFile, lpPackedBase);
 
 	DWORD dwNum;
-	HANDLE hFile = CreateFile("C:\\LinkParser_Packed.exe", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	WriteFile(hFile, (LPVOID)lpPackedBase, UPX_ALIGN_BOUND + dwPackedSize + UPX_SECTION_SIZE * 2 + UPX_BACKUP_SIZE, &dwNum, NULL);
+	HANDLE hFile = CreateFile("C:\\dst.exe", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	WriteFile(hFile, (LPVOID)lpPackedBase, UPX_ALIGN_BOUND + dwPackedSize + UPX_SECTION_SIZE * 3 + UPX_BACKUP_SIZE, &dwNum, NULL);
 	CloseHandle(hFile);
 
 	HeapFree(hHeap, NULL, lpPackedBase);
@@ -253,8 +253,44 @@ int main() {
 	free(lpOrigBuffer);
 	free(lpPackedBuffer);
 	free(lpWorkMemBuffer);
+	//패킹 함수
 
-	getchar();
+	PE32StandardInfo PackedFile("C:\\dst.exe");
+	LPBYTE lpBackupHeaderBase = (((LPBYTE)PackedFile.lpBase) + PackedFile.pSectionHeader[5].PointerToRawData);
+	IMAGE_DOS_HEADER DosHeader;
+	CopyMemory(&DosHeader, lpBackupHeaderBase, sizeof(IMAGE_DOS_HEADER));
+	IMAGE_NT_HEADERS32 NtHeader;
+	CopyMemory(&NtHeader, lpBackupHeaderBase + DosHeader.e_lfanew, sizeof(IMAGE_NT_HEADERS32));
+	PIMAGE_SECTION_HEADER pSectionHeader = (PIMAGE_SECTION_HEADER)malloc(sizeof(IMAGE_SECTION_HEADER) * NtHeader.FileHeader.NumberOfSections);
+	CopyMemory(pSectionHeader, lpBackupHeaderBase + DosHeader.e_lfanew + sizeof(IMAGE_NT_HEADERS32), sizeof(IMAGE_SECTION_HEADER) * NtHeader.FileHeader.NumberOfSections);
+
+	DWORD VirtualSize = 0;
+	for (int i = 0; i < NtHeader.FileHeader.NumberOfSections; i++)
+		VirtualSize += pSectionHeader[i].Misc.VirtualSize;
+
+	hHeap = GetProcessHeap();
+	LPBYTE lpUnpackedBase = (LPBYTE)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, NtHeader.OptionalHeader.SizeOfImage);
+
+	CopyMemory(lpUnpackedBase, lpBackupHeaderBase, NtHeader.OptionalHeader.SizeOfHeaders);
+	aP_depack_asm(((LPBYTE)PackedFile.lpBase + PackedFile.pSectionHeader[1].PointerToRawData), (lpUnpackedBase + NtHeader.OptionalHeader.SizeOfHeaders));
+
+	for (int i = 1; i < NtHeader.FileHeader.NumberOfSections; i++)
+	{
+		LPBYTE lpSrc = lpUnpackedBase + pSectionHeader[i].VirtualAddress - 0xC00;
+		LPBYTE lpDst = lpUnpackedBase + pSectionHeader[i].PointerToRawData;
+		MoveMemory(lpDst, lpSrc, align_to_boundary(pSectionHeader[i].SizeOfRawData, NtHeader.OptionalHeader.FileAlignment));
+	}
+
+	DWORD nBytes;
+	HANDLE hFileO = CreateFile("C:\\orig2.exe", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	WriteFile(hFileO, lpUnpackedBase, NtHeader.OptionalHeader.SizeOfImage, &nBytes, NULL);
+	CloseHandle(hFileO);
+
+	HeapFree(hHeap, NULL, lpUnpackedBase);
+	HeapDestroy(hHeap);
+	free(lpUnpackedBase);
+	//언패킹 함수
+	
 	return 0;
 }
 
@@ -264,7 +300,7 @@ LPBYTE GetPackedBufferWithHeaders(PE32StandardInfo * lpFile)
 
 	IMAGE_DOS_HEADER DosHeader = { 0, }; // 헤더 구조체 할당
 	IMAGE_NT_HEADERS32 NtHeader = { 0, };
-	IMAGE_SECTION_HEADER SectionHeader[5] = { 0, };
+	IMAGE_SECTION_HEADER SectionHeader[6] = { 0, };
 
 	for (INT i = 0; i < lpFile->pNtHeader->FileHeader.NumberOfSections; i++) // 원본 바이너리의 메모리에 올려진 상태의 크기 구하기
 		dwOrigSize += align_to_boundary(lpFile->pSectionHeader[i].Misc.VirtualSize, lpFile->pNtHeader->OptionalHeader.SectionAlignment);
@@ -285,16 +321,16 @@ LPBYTE GetPackedBufferWithHeaders(PE32StandardInfo * lpFile)
 	SecureZeroMemory(lpPackedBuffer, align_to_boundary(aP_max_packed_size(dwOrigSize), UPX_ALIGN_BOUND));
 
 	// DOS HEADER 구성하기
-	DosHeader.e_magic = IMAGE_DOS_SIGNATURE; 
+	DosHeader.e_magic = IMAGE_DOS_SIGNATURE;
 	DosHeader.e_lfanew = sizeof(IMAGE_DOS_HEADER);
 
 	NtHeader.Signature = IMAGE_NT_SIGNATURE; // NT 시그니처
-	
-	// FILE HEADER 구성하기
-	NtHeader.FileHeader.Machine = IMAGE_FILE_MACHINE_I386; 
+
+											 // FILE HEADER 구성하기
+	NtHeader.FileHeader.Machine = IMAGE_FILE_MACHINE_I386;
 	NtHeader.FileHeader.Characteristics = lpFile->pNtHeader->FileHeader.Characteristics;
 	NtHeader.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER32);
-	NtHeader.FileHeader.NumberOfSections = 5;
+	NtHeader.FileHeader.NumberOfSections = 6;
 
 	// Optional Header 구성하기
 	NtHeader.OptionalHeader.Magic = IMAGE_NT_OPTIONAL_HDR32_MAGIC;
@@ -305,7 +341,7 @@ LPBYTE GetPackedBufferWithHeaders(PE32StandardInfo * lpFile)
 	NtHeader.OptionalHeader.MajorOperatingSystemVersion = lpFile->pNtHeader->OptionalHeader.MajorOperatingSystemVersion;
 	NtHeader.OptionalHeader.MajorSubsystemVersion = lpFile->pNtHeader->OptionalHeader.MajorSubsystemVersion;
 	NtHeader.OptionalHeader.Subsystem = lpFile->pNtHeader->OptionalHeader.Subsystem;
-	NtHeader.OptionalHeader.SizeOfImage = UPX_ALIGN_BOUND + dwOrigSize + dwPackedSize + UPX_SECTION_SIZE * 2 + UPX_BACKUP_SIZE; // SizeOfHeaders + UPX0~4
+	NtHeader.OptionalHeader.SizeOfImage = UPX_ALIGN_BOUND + dwOrigSize + dwPackedSize + UPX_SECTION_SIZE * 3 + UPX_BACKUP_SIZE; // SizeOfHeaders + UPX0~4
 	NtHeader.OptionalHeader.BaseOfCode = 0x1000;
 	NtHeader.OptionalHeader.BaseOfData = 0x1000 + dwOrigSize + dwPackedSize + UPX_SECTION_SIZE;
 	NtHeader.OptionalHeader.SizeOfCode = dwOrigSize + dwPackedSize + UPX_SECTION_SIZE;
@@ -380,13 +416,24 @@ LPBYTE GetPackedBufferWithHeaders(PE32StandardInfo * lpFile)
 	dwUPX4 = SectionHeader[4].PointerToRawData;
 	dwRvaUPX4 = SectionHeader[4].VirtualAddress;
 
+	_tcscpy((PCHAR)SectionHeader[5].Name, ".Uchiha");
+	SectionHeader[5].Misc.VirtualSize = UPX_SECTION_SIZE;
+	SectionHeader[5].SizeOfRawData = UPX_SECTION_SIZE;
+	SectionHeader[5].VirtualAddress = SectionHeader[4].VirtualAddress + SectionHeader[4].Misc.VirtualSize;
+	SectionHeader[5].PointerToRawData = SectionHeader[4].PointerToRawData + SectionHeader[4].SizeOfRawData;
+	SectionHeader[5].Characteristics = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ;
+
+	dwUPX5 = SectionHeader[5].PointerToRawData;
+	dwRvaUPX5 = SectionHeader[5].VirtualAddress;
+
 	// 패킹된 PE가 쓰여질 메모리 할당
 	hHeap = GetProcessHeap();
-	lpPackedBase = (LPBYTE)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, (UPX_ALIGN_BOUND + dwPackedSize + UPX_SECTION_SIZE * 2 + UPX_BACKUP_SIZE));
+	lpPackedBase = (LPBYTE)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, (UPX_ALIGN_BOUND + dwPackedSize + UPX_SECTION_SIZE * 3 + UPX_BACKUP_SIZE));
 
 	CopyMemory(lpPackedBase, &DosHeader, sizeof(IMAGE_DOS_HEADER));
 	CopyMemory(lpPackedBase + sizeof(IMAGE_DOS_HEADER), &NtHeader, sizeof(IMAGE_NT_HEADERS32));
 	CopyMemory(lpPackedBase + sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_NT_HEADERS32), SectionHeader, sizeof(SectionHeader));
+	CopyMemory(lpPackedBase + dwUPX5, lpFile->lpBase, lpFile->pNtHeader->OptionalHeader.SizeOfHeaders);
 
 	return lpPackedBase;
 }
@@ -436,7 +483,7 @@ BOOL SetImportRecoveryData(PE32StandardInfo * lpFile, LPBYTE lpPackedBase)	// 함
 				memcpy(lpImportBackup + WrittenByte, szFuncName, strlen(szFuncName)), WrittenByte += strlen(szFuncName);
 				memset(lpImportBackup + WrittenByte++, 0x00, sizeof(BYTE));
 
-				*((LPDWORD)((LPBYTE)lpdwRvaINT - (LPBYTE)lpFile->lpBase + lpOrigBuffer - UPX_ALIGN_BOUND)) = 0x00000000;	// 외부 Ordinal 지움
+				//*((LPDWORD)((LPBYTE)lpdwRvaINT - (LPBYTE)lpFile->lpBase + lpOrigBuffer - UPX_ALIGN_BOUND)) = 0x00000000;	// 외부 Ordinal 지움
 			}
 			else
 			{
@@ -444,10 +491,10 @@ BOOL SetImportRecoveryData(PE32StandardInfo * lpFile, LPBYTE lpPackedBase)	// 함
 				WrittenByte += strlen(pIBN->Name);
 				memset(lpImportBackup + WrittenByte++, 0x00, sizeof(BYTE));
 
-				memset(lpOrigBuffer + *lpdwRvaINT - UPX_ALIGN_BOUND, NULL, strlen(pIBN->Name) + sizeof(BYTE) * 2);	// 함수명, Ordinal 지움
+				//memset(lpOrigBuffer + *lpdwRvaINT - UPX_ALIGN_BOUND, NULL, strlen(pIBN->Name) + sizeof(BYTE) * 2);	// 함수명, Ordinal 지움
 			}
 
-			memset(lpOrigBuffer + pIID->Name - UPX_ALIGN_BOUND, NULL, strlen((PCHAR)lpFile->RvaToRaw(pIID->Name)));	// DLL이름 지움
+			//memset(lpOrigBuffer + pIID->Name - UPX_ALIGN_BOUND, NULL, strlen((PCHAR)lpFile->RvaToRaw(pIID->Name)));	// DLL이름 지움
 			lpdwRvaINT++;
 		}
 		pIID++;
@@ -583,6 +630,9 @@ BOOL SetUnpackCode(PE32StandardInfo * lpFile, LPBYTE lpPackedBase)
 			break;
 		}
 	}
+
+	printf("%08X ", lpFile->pNtHeader->OptionalHeader.ImageBase + dwRvaUPX0);
+	printf("%08X", lpFile->pNtHeader->OptionalHeader.ImageBase + dwRvaUPX1);
 
 	for (DWORD i = 0; i < dwShellCodeSize; i++) {
 		if (*((LPDWORD)lpHeap + i) == 0xBBBBBBBB) {
